@@ -25,7 +25,7 @@ export function Dashboard({ data, isLoading }) {
     }
 
     return (
-        <div className="h-full w-full overflow-y-auto bg-[#09090b] p-6 font-mono text-sm">
+        <div className="h-full w-full overflow-y-auto bg-[#09090b] p-6 pt-20 font-mono text-sm">
             <div className="max-w-3xl mx-auto space-y-6">
 
                 {/* Header Card */}

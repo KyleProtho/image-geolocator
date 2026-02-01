@@ -17,8 +17,25 @@ export const metadata: Metadata = {
     default: "SYS.VISUAL_INTEL // Geolocation Tool",
     template: "%s | SYS.VISUAL_INTEL"
   },
-  description: "Tactical geospatial intelligence analysis dashboard. Advanced AI-powered image geolocation and intelligence gathering tool.",
-  keywords: ["geolocation", "image analysis", "OSINT", "intelligence", "geospatial", "AI analysis"],
+  description: "Find location from picture using AI-powered geolocation. Discover where is this photo taken, identify locations from images, and perform reverse image location searches. Advanced OSINT intelligence gathering tool.",
+  keywords: [
+    "find location from picture",
+    "where is this",
+    "identify location from photo",
+    "reverse image location search",
+    "photo geolocation finder",
+    "where was this picture taken",
+    "image location finder",
+    "find where photo was taken",
+    "geolocation from image",
+    "picture location identifier",
+    "geolocation",
+    "image analysis",
+    "OSINT",
+    "intelligence",
+    "geospatial",
+    "AI analysis"
+  ],
   authors: [{ name: "SYS.VISUAL_INTEL" }],
   creator: "SYS.VISUAL_INTEL",
   publisher: "SYS.VISUAL_INTEL",
@@ -29,16 +46,16 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'SYS.VISUAL_INTEL // Geolocation Tool',
-    description: 'Tactical geospatial intelligence analysis dashboard.',
+    title: 'Find Location from Picture - AI Geolocation Tool',
+    description: 'Find location from picture using AI. Discover where is this photo taken with advanced geolocation analysis.',
     siteName: 'SYS.VISUAL_INTEL',
   },
 
   // Twitter
   twitter: {
     card: 'summary_large_image',
-    title: 'SYS.VISUAL_INTEL // Geolocation Tool',
-    description: 'Tactical geospatial intelligence analysis dashboard.',
+    title: 'Find Location from Picture - AI Geolocation Tool',
+    description: 'Find location from picture using AI. Discover where is this photo taken with advanced geolocation analysis.',
   },
 
   // Robots
@@ -70,8 +87,36 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Structured Data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SYS.VISUAL_INTEL Geolocation Tool",
+    "description": "AI-powered image geolocation tool to find location from picture, identify where photos were taken, and perform reverse image location searches.",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Find location from picture",
+      "Reverse image location search",
+      "Photo geolocation analysis",
+      "AI-powered location identification",
+      "OSINT intelligence gathering"
+    ]
+  };
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

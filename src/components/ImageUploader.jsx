@@ -1,11 +1,22 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Upload, Crosshair, MapPin, Scan } from "lucide-react";
+import { useCallback, useState, useRef, useEffect } from "react";
+import { Upload, Crosshair, Scan, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import clsx from "clsx";
 
 export function ImageUploader({ onImageSelected, selectedImage, isAnalyzing }) {
     const [isDragging, setIsDragging] = useState(false);
+    const [zoom, setZoom] = useState(1);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+    const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+    const imageContainerRef = useRef(null);
+
+    // Reset zoom and position when a new image is selected
+    useEffect(() => {
+        setZoom(1);
+        setPosition({ x: 0, y: 0 });
+    }, [selectedImage]);
 
     const handleDragOver = useCallback((e) => {
         e.preventDefault();
@@ -36,6 +47,44 @@ export function ImageUploader({ onImageSelected, selectedImage, isAnalyzing }) {
         }
     };
 
+    // Zoom with mouse wheel
+    const handleWheel = useCallback((e) => {
+        if (!selectedImage) return;
+        e.preventDefault();
+
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        setZoom(prev => Math.min(Math.max(0.5, prev + delta), 5));
+    }, [selectedImage]);
+
+    // Pan start
+    const handleMouseDown = useCallback((e) => {
+        if (!selectedImage || zoom <= 1) return;
+        setIsPanning(true);
+        setPanStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    }, [selectedImage, zoom, position]);
+
+    // Pan move
+    const handleMouseMove = useCallback((e) => {
+        if (!isPanning) return;
+        setPosition({
+            x: e.clientX - panStart.x,
+            y: e.clientY - panStart.y
+        });
+    }, [isPanning, panStart]);
+
+    // Pan end
+    const handleMouseUp = useCallback(() => {
+        setIsPanning(false);
+    }, []);
+
+    // Zoom controls
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 5));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
+    const handleZoomReset = () => {
+        setZoom(1);
+        setPosition({ x: 0, y: 0 });
+    };
+
     return (
         <div className="relative h-full w-full flex flex-col bg-stone-950 border-r border-stone-800">
             {/* Top Bar Overlay */}
@@ -48,6 +97,33 @@ export function ImageUploader({ onImageSelected, selectedImage, isAnalyzing }) {
                     {selectedImage ? "TARGET_LOCKED" : "AWAITING_INPUT"}
                 </div>
             </div>
+
+            {/* Zoom Controls - Only show when image is selected */}
+            {selectedImage && (
+                <div className="absolute top-14 right-4 z-20 flex flex-col gap-2">
+                    <button
+                        onClick={handleZoomIn}
+                        className="p-2 bg-black/70 hover:bg-emerald-500/20 border border-stone-700 hover:border-emerald-500/50 rounded transition-colors group"
+                        title="Zoom In"
+                    >
+                        <ZoomIn className="w-4 h-4 text-stone-400 group-hover:text-emerald-500" />
+                    </button>
+                    <button
+                        onClick={handleZoomOut}
+                        className="p-2 bg-black/70 hover:bg-emerald-500/20 border border-stone-700 hover:border-emerald-500/50 rounded transition-colors group"
+                        title="Zoom Out"
+                    >
+                        <ZoomOut className="w-4 h-4 text-stone-400 group-hover:text-emerald-500" />
+                    </button>
+                    <button
+                        onClick={handleZoomReset}
+                        className="p-2 bg-black/70 hover:bg-emerald-500/20 border border-stone-700 hover:border-emerald-500/50 rounded transition-colors group"
+                        title="Reset View"
+                    >
+                        <Maximize2 className="w-4 h-4 text-stone-400 group-hover:text-emerald-500" />
+                    </button>
+                </div>
+            )}
 
             <div
                 className={clsx(
@@ -69,12 +145,26 @@ export function ImageUploader({ onImageSelected, selectedImage, isAnalyzing }) {
                 />
 
                 {selectedImage ? (
-                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-                        {/* Image Preview */}
+                    <div
+                        ref={imageContainerRef}
+                        className="relative w-full h-full flex items-center justify-center overflow-hidden"
+                        onWheel={handleWheel}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        style={{ cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default' }}
+                    >
+                        {/* Image Preview with Transform */}
                         <img
                             src={URL.createObjectURL(selectedImage)}
                             alt="Target"
-                            className="max-w-full max-h-full object-contain"
+                            className="max-w-full max-h-full object-contain transition-transform select-none"
+                            style={{
+                                transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+                                transformOrigin: 'center center'
+                            }}
+                            draggable={false}
                         />
 
                         {/* Viewfinder Overlay Layers */}
@@ -107,14 +197,33 @@ export function ImageUploader({ onImageSelected, selectedImage, isAnalyzing }) {
                         </p>
                         <p className="text-xs text-stone-600 mt-2">JPG / PNG ACCEPTED</p>
                     </div>
-                )}
-            </div>
+                )}\n            </div>
+
+            {/* Legal Notice Banner */}
+            {!selectedImage && (
+                <div className="px-4 py-3 bg-red-950/30 border-t border-red-900/50 text-[10px] font-mono text-red-300">
+                    <p className="mb-1">
+                        <span className="text-red-400 font-bold">⚠ WARNING:</span> Sexually explicit content is STRICTLY PROHIBITED.
+                    </p>
+                    <p className="text-stone-500">
+                        By uploading, you agree to our{" "}
+                        <a href="/acceptable-use" className="text-emerald-400 hover:underline" target="_blank" rel="noopener noreferrer">
+                            Acceptable Use Policy
+                        </a>
+                    </p>
+                </div>
+            )}
 
             {/* Footer Info */}
             <div className="h-8 bg-stone-900 border-t border-stone-800 flex items-center px-4 justify-between text-[10px] font-mono text-stone-500">
                 <span>LAT: --.---</span>
                 <span>LNG: --.---</span>
-                <span>ZOOM: 1.0x</span>
+                <span className={clsx(
+                    "transition-colors",
+                    zoom !== 1 && "text-emerald-500"
+                )}>
+                    ZOOM: {zoom.toFixed(1)}x
+                </span>
             </div>
         </div>
     );
